@@ -51,14 +51,14 @@ def road_Category(df):
     from pyspark.sql.functions import when,col
 
     df_road_Cat = df.withColumn("Road_Category_Name",
-                  when(col('Road_Category') == 'TA', 'Class A Trunk Road')
-                  .when(col('Road_Category') == 'TM', 'Class A Trunk Motor')
-                   .when(col('Road_Category') == 'PA','Class A Principal road')
+                when(col('Road_Category') == 'TA', 'Class A Trunk Road')
+                .when(col('Road_Category') == 'TM', 'Class A Trunk Motor')
+                .when(col('Road_Category') == 'PA','Class A Principal road')
                     .when(col('Road_Category') == 'PM','Class A Principal Motorway')
                     .when(col('Road_Category') == 'M','Class B road')
                     .otherwise('NA')
-                  
-                  )
+                
+                )
     print('Success!! ')
     print('***********************')
     return df_road_Cat
@@ -78,11 +78,11 @@ def road_Type(df):
     from pyspark.sql.functions import when,col
 
     df_road_Type = df.withColumn("Road_Type",
-                  when(col('Road_Category_Name').like('%Class A%'),'Major')
-                  .when(col('Road_Category_Name').like('%Class B%'),'Minor')
+                when(col('Road_Category_Name').like('%Class A%'),'Major')
+                .when(col('Road_Category_Name').like('%Class B%'),'Minor')
                     .otherwise('NA')
-                  
-                  )
+                
+                )
     print('Success!! ')
     print('***********************')
     return df_road_Type

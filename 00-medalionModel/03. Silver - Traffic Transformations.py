@@ -112,8 +112,8 @@ def create_TransformedTime(df):
     from pyspark.sql.functions import current_timestamp
     print('Creating Transformed Time column : ',end='')
     df_timestamp = df.withColumn('Transformed_Time',
-                      current_timestamp()
-                      )
+                    current_timestamp()
+                    )
     print('Success!!')
     return df_timestamp
 

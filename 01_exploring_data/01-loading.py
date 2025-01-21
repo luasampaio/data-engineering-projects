@@ -12,3 +12,10 @@ print(df.shape)  # Exibe o número de linhas e colunas do DataFrame
 
 print(df.describe())  # Exibe estatísticas descritivas do DataFrame
 
+# Exibe o número de valores únicos em cada coluna
+
+dtype_especificado = {
+    16: 'str',  # Substitua por 'int', 'float', ou outro tipo, se necessário
+}
+
+df = pd.read_csv('_datasets/jobs.csv', dtype=dtype_especificado)

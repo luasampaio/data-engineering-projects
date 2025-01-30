@@ -15,5 +15,3 @@ pip install -r requirements.txt
 
 ###  Como Usar : 
 Clone este repositório:
-git clone https://github.com/seu-usuario-inhire-scraping.git
-cd inhire-scraping

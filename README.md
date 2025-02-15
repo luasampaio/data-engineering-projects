@@ -1,9 +1,8 @@
 # data-engineering-projects
+### Implementação de Pipeline de Dados com PySpark
 
-
-- This is repository for Projects and engineering data 
-
-
+>  Descrição do Projeto
+Este repositório é dedicado à demonstração da construção de um pipeline de dados utilizando as tecnologias Spark e  Python.
 
 
 

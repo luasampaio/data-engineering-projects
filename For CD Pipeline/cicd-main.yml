@@ -1,0 +1,31 @@
+trigger:
+  - main
+
+variables:
+  - group: dev-cicd-grp
+  - group: uat-cicd-grp
+  - name: notebookPath
+    value: "notebooks"  
+
+pool:
+  vmImage: "windows-latest"
+
+stages:
+  - template: deploy.yml
+    parameters:
+      stageId: "Deploy_to_Dev_Env"
+      env: "dev"
+      environmentName: $(dev-env-name)
+      resourceGroupName: $(dev-resource-grp-name)
+      serviceConnection: $(dev-service-connection-name)
+      notebookPath: $(notebookPath)
+
+  - template: deploy.yml                       ## No need to change anything from this file
+    parameters:
+      dependsOn: ["Deploy_to_Dev_Env"]          ## To run this pipeline if Dev deployment is success
+      stageId: "Deploy_to_UAT_Env"
+      env: "UAT"
+      environmentName: $(UAT-env-name)
+      resourceGroupName: $(UAT-resource-grp-name)
+      serviceConnection: $(UAT-service-connection-name)
+      notebookPath: $(notebookPath)             ## This will be same

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+*.egg-info/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Environment
+.env
+venv/
+.venv/
+
+# Data files
+data/
+batch/
+*.parquet
+*.csv
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+*.pid.lock
+docker-compose.override.yml
+
+# VSCode
+.vscode/
+
+# Others
+healthcheck.log
+logs/

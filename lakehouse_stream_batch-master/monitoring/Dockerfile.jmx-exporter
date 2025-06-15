@@ -1,0 +1,10 @@
+FROM openjdk:11-jre-slim
+
+ARG JMX_EXPORTER_VERSION=1.0.1
+
+RUN mkdir -p /jmx_exporter && \
+    apt-get update && apt-get install -y wget && \
+    wget -O /jmx_exporter/jmx_prometheus_httpserver.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_httpserver/${JMX_EXPORTER_VERSION}/jmx_prometheus_httpserver-${JMX_EXPORTER_VERSION}.jar && \
+    apt-get remove -y wget && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["java", "-jar", "/jmx_exporter/jmx_prometheus_httpserver.jar"]  

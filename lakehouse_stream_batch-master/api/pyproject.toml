@@ -1,0 +1,26 @@
+[project]
+name = "lakehouse_stream_batch_api"
+version = "0.1.0"
+description = "FastAPI + Faker generator for lakehouse_stream_batch demo"
+requires-python = ">=3.11"
+
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "faker",
+  "kafka-python",
+  "pandas>=2.2",
+  "pyarrow>=15.0",
+  "prometheus-fastapi-instrumentator>=7.1.0",
+  "requests",
+]
+
+[project.optional-dependencies]
+dev = ["ipython", "ruff"]
+
+[build-system]
+requires = ["uv", "setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry.dependencies]
+uvicorn = "^0.22.0"

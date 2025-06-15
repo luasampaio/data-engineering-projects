@@ -1,0 +1,33 @@
+# Regras de Engenharia para o Projeto Lakehouse Stream & Batch
+
+## 1. Iteração e Evolução
+- Sempre procure código existente para evoluir antes de criar algo novo.
+- Prefira soluções simples e evite mudanças drásticas de padrão sem necessidade.
+- Só introduza novas tecnologias/padrões se esgotou as opções do que já existe — e, nesse caso, remova o legado para evitar duplicidade.
+
+## 2. Organização e Limpeza
+- Mantenha o código organizado, limpo e modular.
+- Evite duplicação: antes de criar algo, cheque se já existe funcionalidade semelhante.
+- Refatore arquivos muito grandes (>200-300 linhas).
+
+## 3. Ambientes e Dados
+- Tenha consciência dos diferentes ambientes: dev, test, prod.
+- Nunca adicione mocks, stubs ou dados fake em código que afete dev ou prod — isso só é aceitável em testes.
+- Nunca sobrescreva arquivos sensíveis como `.env` sem confirmação explícita.
+
+## 4. Mudanças e Escopo
+- Só faça mudanças no escopo do que foi pedido ou do que está claramente relacionado ao objetivo.
+- Não altere áreas do código que não sejam relevantes para a tarefa em andamento.
+- Sempre pense em quais métodos e áreas podem ser afetados pela mudança.
+
+## 5. Testes e Qualidade
+- Escreva testes para funcionalidades críticas.
+- Garanta que o pipeline está funcional ponta a ponta após mudanças importantes (ex: rode o healthcheck).
+
+## 6. Execução e Servidores
+- Sempre reinicie os serviços relevantes após alterações que afetem seu funcionamento.
+- Se necessário, mate instâncias antigas antes de subir novas (útil para containers ou jobs Spark/Flink).
+
+## 7. Simplicidade e Manutenção
+- Prefira scripts e automações simples, documentados e reutilizáveis.
+- Scripts que serão rodados uma única vez devem ser removidos após o uso.

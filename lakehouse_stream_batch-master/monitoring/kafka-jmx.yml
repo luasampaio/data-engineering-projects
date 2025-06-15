@@ -1,0 +1,21 @@
+startDelaySeconds: 0
+hostPort: kafka:9999
+username: ""
+password: ""
+rules:
+  - pattern: 'kafka.server<type=(.+), name=(.+)><>Value'
+    name: kafka_$1_$2
+    type: GAUGE
+    help: 'Kafka metric $1 $2'
+  - pattern: 'kafka.network<type=(.+), name=(.+)><>Value'
+    name: kafka_network_$1_$2
+    type: GAUGE
+    help: 'Kafka network metric $1 $2'
+  - pattern: 'java.lang<type=GarbageCollector, name=(.+)><>CollectionCount'
+    name: jvm_gc_$1_collection_count
+    type: COUNTER
+    help: 'JVM GC $1 collection count'
+  - pattern: 'java.lang<type=Memory, name=HeapMemoryUsage><>(used|committed|max|init)'
+    name: jvm_memory_heap_$1
+    type: GAUGE
+    help: 'JVM heap memory $1'

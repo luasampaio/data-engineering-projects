@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+lakehouse_stream_batch_api.egg-info/
+venv/
+.venv/

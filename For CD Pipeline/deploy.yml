@@ -1,0 +1,46 @@
+parameters:
+  - name: stageId
+    type: string
+  - name: dependsOn
+    type: object
+    default: []
+  - name: env
+    type: string
+  - name: environmentName
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: notebookPath
+    type: string
+
+stages:
+  - stage: "${{ parameters.stageId }}"
+    displayName: "Deploying to [${{ upper(parameters.env) }}] environment"
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - deployment: Deploy
+        displayName: "Deploying Databricks Notebooks"
+        environment: ${{ parameters.environmentName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: ${{ parameters.serviceConnection }}
+                    scriptType: "pscore"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      az config set extension.use_dynamic_install=yes_without_prompt
+                      
+                      $databricksWorkspace = (az resource list --resource-group ${{parameters.resourceGroupName}} --query "[?type =='Microsoft.Databricks/workspaces']" | ConvertFrom-Json)[0]
+                      $databricksWorkspaceInfo = (az databricks workspace show --ids $databricksWorkspace.id | ConvertFrom-Json)
+                      
+                      $bearerToken = $(Build.Repository.LocalPath)/CICD/shellScript/DBToken.ps1 -databricksWorkspaceResourceId $databricksWorkspaceInfo.id -databricksWorkspaceUrl $databricksWorkspaceInfo.workspaceUrl
+                      
+                      Install-Module -Name azure.databricks.cicd.tools -Force -Scope CurrentUser
+                      Import-Module -Name azure.databricks.cicd.tools
+                      Import-DatabricksFolder -BearerToken $bearerToken -Region $databricksWorkspaceInfo.location -LocalPath $(Build.Repository.LocalPath)/${{ parameters.notebookPath }} -DatabricksPath '/live' -Clean

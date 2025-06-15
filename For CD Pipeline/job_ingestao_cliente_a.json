@@ -1,0 +1,52 @@
+{
+  "name": "IngestaoClienteA",
+  "tasks": [
+    {
+      "task_key": "bronze",
+      "notebook_task": {
+        "notebook_path": "/_ingestion/bronze/ingest_raw_data"
+      },
+      "cluster_spec": {
+        "new_cluster": {
+          "spark_version": "13.3.x-scala2.12",
+          "node_type_id": "Standard_DS3_v2",
+          "num_workers": 2
+        }
+      }
+    },
+    {
+      "task_key": "silver",
+      "depends_on": [
+        {
+          "task_key": "bronze"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/_ingestion/silver/transform_clean_data"
+      },
+      "cluster_spec": {
+        "existing_cluster_id": "abc-123456"
+      }
+    },
+    {
+      "task_key": "gold",
+      "depends_on": [
+        {
+          "task_key": "silver"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/_ingestion/gold/aggregate_business_data"
+      },
+      "cluster_spec": {
+        "existing_cluster_id": "abc-123456"
+      }
+    }
+  ],
+  "max_concurrent_runs": 1,
+  "email_notifications": {
+    "on_failure": [
+      "dados@empresa.com"
+    ]
+  }
+}

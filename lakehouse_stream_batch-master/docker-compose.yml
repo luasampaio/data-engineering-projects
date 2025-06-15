@@ -1,0 +1,176 @@
+networks:
+  bigdata_net:
+    driver: bridge        # todos no mesmo bridge network ⇒ DNS interno
+
+volumes:
+  pgdata:
+
+services:
+# ---------------------- Zookeeper -------------------------------
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks: [bigdata_net]
+
+# ---------------------- Kafka -----------------------------------
+  kafka:
+    image: bitnami/kafka:3.5.1
+    container_name: kafka
+    depends_on: [zookeeper]
+    networks: [bigdata_net]
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:19092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:19092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_BROKER_ID=1
+      - KAFKA_ENABLE_KRAFT=no
+      - JMX_PORT=9999
+      - KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=kafka
+    ports:
+      - "19092:19092"     # publica só a porta externa
+
+# ---------------------- Flink cluster ---------------------------
+  jobmanager:
+    image: flink:latest
+    container_name: jobmanager
+    networks: [bigdata_net]
+    ports:
+      - "8081:8081"       # Flink Dashboard
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+
+  taskmanager:
+    image: flink:latest
+    container_name: taskmanager
+    networks: [bigdata_net]
+    depends_on: [jobmanager]
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - TASKMANAGER_NUMBER_OF_TASK_SLOTS=4
+
+# ---------------------- Spark cluster ---------------------------
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    networks: [bigdata_net]
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=7071 -Dcom.sun.management.jmxremote.rmi.port=7071 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=spark-master
+    ports:
+      - "8080:8080"       # Spark Master UI
+
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark-worker
+    networks: [bigdata_net]
+    depends_on: [spark-master]
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_WEBUI_PORT=8082
+    ports:
+      - "8082:8082"       # Spark Worker UI
+
+# ---------------------- PostgreSQL ------------------------------
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    networks: [bigdata_net]
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./monitoring/grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql 
+
+# ---------------------- API ------------------------------
+  api:
+    build: ./api        # veremos o Dockerfile
+    container_name: api
+    depends_on: [kafka]
+    environment:
+      - KAFKA_BOOTSTRAP=${KAFKA_BOOTSTRAP}
+      - BATCH_DIR=${BATCH_DIR}
+    volumes:
+      - ./data:/data            # onde ficarão os arquivos Parquet
+    ports:
+      - "8000:8000"
+    networks: [bigdata_net]
+
+# ---------------- Prometheus -----------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks: [bigdata_net]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+# ---------------- Grafana --------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks: [bigdata_net]
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    depends_on: [prometheus]
+    volumes:
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
+
+# ---------------- Kafka‑UI -------------------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    networks: [bigdata_net]
+    depends_on: [kafka]
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=demo
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    ports:
+      - "8085:8080"       # externo 8085 → interno 8080
+
+# ---------------- JMX exporters --------------------------------
+  kafka-jmx-exporter:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile.jmx-exporter
+    container_name: kafka-jmx-exporter
+    networks: [bigdata_net]
+    command: "9404 /jmx_exporter/kafka-jmx.yml"
+    volumes:
+      - ./monitoring/kafka-jmx.yml:/jmx_exporter/kafka-jmx.yml
+
+  spark-jmx-exporter:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile.jmx-exporter
+    container_name: spark-jmx-exporter
+    networks: [bigdata_net]
+    command: "9405 /jmx_exporter/spark-jmx.yml"
+    volumes:
+      - ./monitoring/spark-jmx.yml:/jmx_exporter/spark-jmx.yml
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    networks: [bigdata_net]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://admin:admin@postgres:5432/demo?sslmode=disable"
+    depends_on: [postgres]
+    ports: ["9187:9187"]   # opcional ─ externo

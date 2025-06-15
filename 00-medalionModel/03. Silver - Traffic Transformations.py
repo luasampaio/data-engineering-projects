@@ -1,11 +1,4 @@
-# Databricks notebook source
-# MAGIC %md
-# MAGIC
-# MAGIC ## Extracting Checkpoint, Bronze, Silver containers URLs
 
-# COMMAND ----------
-
-# MAGIC %run "/Users/shanmukh@shanmukhsattiraju.com/04. Common"
 
 # COMMAND ----------
 

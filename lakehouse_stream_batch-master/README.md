@@ -67,4 +67,4 @@ API (Faker) → Kafka (streaming) → Flink (streaming) → Postgres
 
 ---
 
-Dúvidas ou sugestões? Abra uma issue ou contribua!
+
